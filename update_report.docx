@@ -1,0 +1,106 @@
+🔍 1. Search Functionality
+✅ Objective:
+Allow users to search blog posts by a keyword.
+
+⚙️ Workflow Logic:
+Frontend (HTML - base.html):
+
+A search form is placed in the navbar.
+
+It uses the GET method to send the query to the /search/ URL.
+
+The name="q" is the key for the search term.
+
+html
+Copy
+Edit
+<form class="d-flex ms-auto" method="GET" action="{% url 'blog-search' %}">
+    <input class="form-control me-2" type="search" name="q" placeholder="Search blog...">
+    <button class="btn btn-outline-light" type="submit">Search</button>
+</form>
+Backend (views.py):
+
+The search_view function receives the query from the GET request.
+
+It uses Django’s Q object to filter posts where:
+
+The title or content contains the keyword (case-insensitive).
+
+Only published posts are shown.
+
+python
+Copy
+Edit
+from django.db.models import Q
+
+def search_view(request):
+    query = request.GET.get('q')
+    results = []
+    if query:
+        results = BlogPost.objects.filter(
+            Q(title__icontains=query) |
+            Q(content__icontains=query),
+            status='published'
+        )
+    return render(request, 'search_results.html', {'query': query, 'results': results})
+Template (search_results.html):
+
+Displays a list of posts matching the query.
+
+Shows a message if there are no matches.
+
+🖼️ 2. Banner Carousel Functionality
+✅ Objective:
+Display a carousel of banner images on every page using local static files.
+
+⚙️ Workflow Logic:
+Folder Setup:
+
+Banner images are stored in:
+
+arduino
+Copy
+Edit
+blog/static/banners/
+Backend Logic (views.py):
+
+A function home_view or equivalent loads image filenames from the banners/ folder.
+
+Only files ending in .jpg, .jpeg, .png are selected.
+
+Each filename is converted to a static URL (/static/banners/filename.jpg) and passed to the template.
+
+python
+Copy
+Edit
+import os
+from django.conf import settings
+
+def home_view(request):
+    banner_dir = os.path.join(settings.STATICFILES_DIRS[0], 'banners')
+    images = [f'banners/{img}' for img in os.listdir(banner_dir) if img.endswith(('.jpg', '.jpeg', '.png'))]
+    carousel_images = [{'url': f'/static/{img}'} for img in images]
+    return render(request, 'base.html', {'carousel_images': carousel_images})
+Template (base.html):
+
+A Bootstrap carousel is defined.
+
+Each image from carousel_images is rendered inside the carousel.
+
+html
+Copy
+Edit
+<div id="bannerCarousel" class="carousel slide">
+    <div class="carousel-inner">
+        {% for img in carousel_images %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <img src="{{ img.url }}" class="d-block w-100" alt="Banner">
+            </div>
+        {% endfor %}
+    </div>
+    <!-- Controls for carousel omitted for brevity -->
+</div>
+📌 Summary
+Feature	Key Logic	Output
+Search	Filters posts by keyword in title or content using Q objects	Search results page
+Banner	Loads local static images from /static/banners/, passes them to base template	Carousel on top of the page
